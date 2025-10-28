@@ -31,4 +31,4 @@ target_compile_features(double_pendulum PRIVATE c_std_99)
 target_compile_options(double_pendulum PRIVATE -Wall -Wextra -pedantic)
 target_compile_definitions(double_pendulum PRIVATE ASSETS_DIR="${PROJECT_SOURCE_DIR}/assets")
 
-target_link_libraries(double_pendulum PRIVATE raylib)
+target_link_libraries(double_pendulum PRIVATE raylib m)
