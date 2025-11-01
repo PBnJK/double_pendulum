@@ -4,9 +4,14 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <raylib.h>
+
+#if defined(PLATFORM_WEB)
+#include <emscripten/emscripten.h>
+#endif
 
 #define SCR_W (1280)
 #define SCR_H (720)
@@ -26,17 +31,24 @@ typedef struct _DoublePendulum {
 	int step;
 } DoublePendulum;
 
+static DoublePendulum _dp;
+
+static bool _changed = false;
+static float _l1, _l2;
+static float _m_b1, _m_b2;
+static float _g;
+
 void dp_init(DoublePendulum *dp) {
 	dp->origin.x = SCR_W / 2.0f;
 	dp->origin.y = SCR_H / 4.0f;
 
-	dp->l1 = 200.0f;
-	dp->l2 = 100.0f;
+	dp->l1 = _l1 = 200.0f;
+	dp->l2 = _l2 = 100.0f;
 
-	dp->m_b1 = 0.5f;
-	dp->m_b2 = 1.0f;
+	dp->m_b1 = _m_b1 = 0.5f;
+	dp->m_b2 = _m_b2 = 1.0f;
 
-	dp->g = 9.81f;
+	dp->g = _g = 9.81f;
 
 	dp->angle_1 = PI / 2.0f;
 	dp->angle_2 = -PI / 2.0f;
@@ -109,34 +121,87 @@ void dp_draw(DoublePendulum *dp) {
 	DrawCircleV(dp->p2, 8.0f, GREEN);
 }
 
-int main(int argc, char *argv[]) {
+void update(void) {
+	int i;
+
+	if( _changed ) {
+		_dp.l1 = _l1;
+		_dp.l2 = _l2;
+		_dp.m_b1 = _m_b1;
+		_dp.m_b2 = _m_b2;
+		_dp.g = _g;
+
+		_changed = false;
+	}
+
+	for( i = 0; i < 10; ++i ) {
+		dp_step(&_dp);
+	}
+
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+	dp_draw(&_dp);
+	EndDrawing();
+}
+
+int
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	main(int argc, char *argv[]) {
 	(void)argc;
 	(void)argv;
 
-	int i;
-	DoublePendulum dp;
-	bool shouldClose;
+	dp_init(&_dp);
 
 	InitWindow(SCR_W, SCR_H, SCR_TITLE);
+
+#if defined(PLATFORM_WEB)
+	emscripten_set_main_loop(update, 0, 1);
+#else
 	SetTargetFPS(60);
-
-	dp_init(&dp);
-
-	shouldClose = false;
-	while( !shouldClose ) {
-		shouldClose = WindowShouldClose();
-
-		for( i = 0; i < 10; ++i ) {
-			dp_step(&dp);
-		}
-
-		BeginDrawing();
-		ClearBackground(RAYWHITE);
-		dp_draw(&dp);
-		EndDrawing();
+	while( !WindowShouldClose() ) {
+		update();
 	}
+#endif
 
 	CloseWindow();
 
 	return EXIT_SUCCESS;
+}
+
+void
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	update_l1(float length) {
+	_changed = true;
+	_l1 = length;
+}
+
+void
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	update_l2(float length) {
+	_changed = true;
+	_l2 = length;
+}
+
+void
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	update_b1_mass(float mass) {
+	_changed = true;
+	_m_b1 = mass;
+}
+
+void
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	update_b2_mass(float mass) {
+	_changed = true;
+	_m_b2 = mass;
 }

@@ -18,8 +18,8 @@ set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
 	raylib
 	GIT_REPOSITORY "https://github.com/raysan5/raylib.git"
-    GIT_TAG "master"
-    GIT_PROGRESS TRUE
+  GIT_TAG "master"
+  GIT_PROGRESS TRUE
 	FIND_PACKAGE_ARGS
 )
 
@@ -32,3 +32,7 @@ target_compile_options(double_pendulum PRIVATE -Wall -Wextra -pedantic)
 target_compile_definitions(double_pendulum PRIVATE ASSETS_DIR="${PROJECT_SOURCE_DIR}/assets")
 
 target_link_libraries(double_pendulum PRIVATE raylib m)
+
+if (EMSCRIPTEN)
+  add_link_options("-sUSE_GLFW=3 -sASSERTIONS=1 -sWASM=1 -sASYNCIFY -sGL_ENABLE_GET_PROC_ADDRESS=1")
+endif()
