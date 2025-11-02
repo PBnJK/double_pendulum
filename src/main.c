@@ -4,7 +4,6 @@
 
 #include <math.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <raylib.h>
@@ -29,6 +28,8 @@ typedef struct _DoublePendulum {
 	float angv_1, angv_2;
 
 	int step;
+
+	RenderTexture2D trail_target;
 } DoublePendulum;
 
 static DoublePendulum _dp;
@@ -63,6 +64,10 @@ void dp_init(DoublePendulum *dp) {
 	dp->p2.y = 0.0f;
 
 	dp->step = 1;
+
+	/* TODO: doesn't work on web :-(
+	 * dp->trail_target = LoadRenderTexture(SCR_W, SCR_H);
+	 */
 }
 
 void dp_step(DoublePendulum *dp) {
@@ -114,6 +119,13 @@ void dp_step(DoublePendulum *dp) {
 }
 
 void dp_draw(DoublePendulum *dp) {
+	BeginTextureMode(dp->trail_target);
+	DrawPixelV(dp->p1, PURPLE);
+	DrawPixelV(dp->p2, GREEN);
+	EndTextureMode();
+
+	DrawTexture(dp->trail_target.texture, 0, 0, RAYWHITE);
+
 	DrawLineEx(dp->origin, dp->p1, 8.0f, RED);
 	DrawLineEx(dp->p1, dp->p2, 8.0f, RED);
 
@@ -204,4 +216,13 @@ void
 	update_b2_mass(float mass) {
 	_changed = true;
 	_m_b2 = mass;
+}
+
+void
+#if defined(PLATFORM_WEB)
+	EMSCRIPTEN_KEEPALIVE
+#endif
+	update_g(float gravity) {
+	_changed = true;
+	_g = gravity;
 }
