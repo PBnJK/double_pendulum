@@ -1,4 +1,6 @@
-web/
 dev/
 raylib/
 .cache/
+
+.ninja_deps
+.ninja_log

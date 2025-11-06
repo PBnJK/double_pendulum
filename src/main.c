@@ -16,6 +16,10 @@
 #define SCR_H (720)
 #define SCR_TITLE "Double Pendulum!"
 
+#define TRAIL_SQ_SIZE 4
+#define ITERATIONS 60
+#define Q_ITERATIONS (ITERATIONS >> 2)
+
 typedef struct _DoublePendulum {
 	Vector2 origin;
 	Vector2 p1;
@@ -30,6 +34,8 @@ typedef struct _DoublePendulum {
 	int step;
 
 	RenderTexture2D trail_target;
+	Vector2 trail1[ITERATIONS];
+	Vector2 trail2[ITERATIONS];
 } DoublePendulum;
 
 static DoublePendulum _dp;
@@ -49,7 +55,7 @@ void dp_init(DoublePendulum *dp) {
 	dp->m_b1 = _m_b1 = 0.5f;
 	dp->m_b2 = _m_b2 = 1.0f;
 
-	dp->g = _g = 9.81f;
+	dp->g = _g = 98.1f;
 
 	dp->angle_1 = PI / 2.0f;
 	dp->angle_2 = -PI / 2.0f;
@@ -65,15 +71,13 @@ void dp_init(DoublePendulum *dp) {
 
 	dp->step = 1;
 
-	/* TODO: doesn't work on web :-(
-	 * dp->trail_target = LoadRenderTexture(SCR_W, SCR_H);
-	 */
+	dp->trail_target = LoadRenderTexture(SCR_W, SCR_H);
 }
 
 void dp_step(DoublePendulum *dp) {
 	float a1, a2;
 
-	const float DT = GetFrameTime();
+	const float DT = GetFrameTime() / Q_ITERATIONS;
 
 	const float DELTA = dp->angle_2 - dp->angle_1;
 
@@ -119,9 +123,16 @@ void dp_step(DoublePendulum *dp) {
 }
 
 void dp_draw(DoublePendulum *dp) {
+	int i;
+	Vector2 p1, p2;
+
 	BeginTextureMode(dp->trail_target);
-	DrawPixelV(dp->p1, PURPLE);
-	DrawPixelV(dp->p2, GREEN);
+	for( i = 0; i < ITERATIONS; ++i ) {
+		p1 = dp->trail1[i];
+		p2 = dp->trail2[i];
+		DrawRectangle(p1.x, SCR_H - p1.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, PURPLE);
+		DrawRectangle(p2.x, SCR_H - p2.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, GREEN);
+	}
 	EndTextureMode();
 
 	DrawTexture(dp->trail_target.texture, 0, 0, RAYWHITE);
@@ -146,8 +157,10 @@ void update(void) {
 		_changed = false;
 	}
 
-	for( i = 0; i < 10; ++i ) {
+	for( i = 0; i < ITERATIONS; ++i ) {
 		dp_step(&_dp);
+		_dp.trail1[i] = _dp.p1;
+		_dp.trail2[i] = _dp.p2;
 	}
 
 	BeginDrawing();
@@ -164,9 +177,9 @@ int
 	(void)argc;
 	(void)argv;
 
-	dp_init(&_dp);
-
 	InitWindow(SCR_W, SCR_H, SCR_TITLE);
+
+	dp_init(&_dp);
 
 #if defined(PLATFORM_WEB)
 	emscripten_set_main_loop(update, 0, 1);
