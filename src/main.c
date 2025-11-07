@@ -34,8 +34,7 @@ typedef struct _DoublePendulum {
 	int step;
 
 	RenderTexture2D trail_target;
-	Vector2 trail1[ITERATIONS];
-	Vector2 trail2[ITERATIONS];
+	Vector2 trail[ITERATIONS];
 } DoublePendulum;
 
 static DoublePendulum _dp;
@@ -124,14 +123,12 @@ void dp_step(DoublePendulum *dp) {
 
 void dp_draw(DoublePendulum *dp) {
 	int i;
-	Vector2 p1, p2;
+	Vector2 p;
 
 	BeginTextureMode(dp->trail_target);
 	for( i = 0; i < ITERATIONS; ++i ) {
-		p1 = dp->trail1[i];
-		p2 = dp->trail2[i];
-		DrawRectangle(p1.x, SCR_H - p1.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, PURPLE);
-		DrawRectangle(p2.x, SCR_H - p2.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, GREEN);
+		p = dp->trail[i];
+		DrawRectangle(p.x, SCR_H - p.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, GREEN);
 	}
 	EndTextureMode();
 
@@ -159,8 +156,7 @@ void update(void) {
 
 	for( i = 0; i < ITERATIONS; ++i ) {
 		dp_step(&_dp);
-		_dp.trail1[i] = _dp.p1;
-		_dp.trail2[i] = _dp.p2;
+		_dp.trail[i] = _dp.p2;
 	}
 
 	BeginDrawing();
