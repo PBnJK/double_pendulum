@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <raylib.h>
@@ -16,9 +17,13 @@
 #define SCR_H (720)
 #define SCR_TITLE "Double Pendulum!"
 
-#define TRAIL_SQ_SIZE 4
-#define ITERATIONS 60
+#define FPS (60)
+
+#define ITERATIONS (60)
 #define Q_ITERATIONS (ITERATIONS >> 2)
+
+#define TRAIL_SQ_SIZE (4)
+#define TRAIL_FADE_RATE (0.05f)
 
 typedef struct _DoublePendulum {
 	Vector2 origin;
@@ -34,6 +39,7 @@ typedef struct _DoublePendulum {
 	int step;
 
 	RenderTexture2D trail_target;
+
 	Vector2 trail[ITERATIONS];
 } DoublePendulum;
 
@@ -54,7 +60,7 @@ void dp_init(DoublePendulum *dp) {
 	dp->m_b1 = _m_b1 = 0.5f;
 	dp->m_b2 = _m_b2 = 1.0f;
 
-	dp->g = _g = 98.1f;
+	dp->g = _g = 9.81f;
 
 	dp->angle_1 = PI / 2.0f;
 	dp->angle_2 = -PI / 2.0f;
@@ -126,13 +132,14 @@ void dp_draw(DoublePendulum *dp) {
 	Vector2 p;
 
 	BeginTextureMode(dp->trail_target);
+	DrawRectangle(0, 0, SCR_W, SCR_H, Fade(WHITE, TRAIL_FADE_RATE));
 	for( i = 0; i < ITERATIONS; ++i ) {
 		p = dp->trail[i];
 		DrawRectangle(p.x, SCR_H - p.y, TRAIL_SQ_SIZE, TRAIL_SQ_SIZE, GREEN);
 	}
 	EndTextureMode();
 
-	DrawTexture(dp->trail_target.texture, 0, 0, RAYWHITE);
+	DrawTexture(dp->trail_target.texture, 0, 0, WHITE);
 
 	DrawLineEx(dp->origin, dp->p1, 8.0f, RED);
 	DrawLineEx(dp->p1, dp->p2, 8.0f, RED);
@@ -160,7 +167,7 @@ void update(void) {
 	}
 
 	BeginDrawing();
-	ClearBackground(RAYWHITE);
+	ClearBackground(WHITE);
 	dp_draw(&_dp);
 	EndDrawing();
 }
@@ -180,7 +187,7 @@ int
 #if defined(PLATFORM_WEB)
 	emscripten_set_main_loop(update, 0, 1);
 #else
-	SetTargetFPS(60);
+	SetTargetFPS(FPS);
 	while( !WindowShouldClose() ) {
 		update();
 	}
